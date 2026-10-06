@@ -19,44 +19,44 @@ export let SignupFun = async (req, res) => {
     if (!error.isEmpty()) {
       return res.status(400).json({ msg_validation: error.array()[0] });
     }
-    let find_user = await UserModel.findOne({ email: email });
+    // let find_user = await UserModel.findOne({ email: email });
 
-    if (find_user && token_cookie && find_user.verified == false) {
-      let decoded = jwt.verify(token_cookie, config.jwtsecret);
+    // if (find_user && token_cookie && find_user.verified == false) {
+    //   let decoded = jwt.verify(token_cookie, config.jwtsecret);
 
-      // decoded = await UserModel.findById({ _id: decoded.userId });
+    //   // decoded = await UserModel.findById({ _id: decoded.userId });
 
-      let otp = generateotp();
-      let html = emailTemplate();
+    //   let otp = generateotp();
+    //   let html = emailTemplate();
 
-      console.log(otp);
+    //   console.log(otp);
 
-      const hashedOtp = await crypto
-        .createHash("sha256")
-        .update(otp)
-        .digest("hex");
+    //   const hashedOtp = await crypto
+    //     .createHash("sha256")
+    //     .update(otp)
+    //     .digest("hex");
 
-      const otpstore = new OTP({
-        userId: decoded.userId,
-        email: decoded.email,
-        otp: hashedOtp,
-      });
-      await otpstore.save();
+    //   const otpstore = new OTP({
+    //     userId: decoded.userId,
+    //     email: decoded.email,
+    //     otp: hashedOtp,
+    //   });
+    //   await otpstore.save();
 
-      await sendEmail(
-        decoded.email,
-        "OTP Verification",
-        `your otp is ${otp}`,
-        html,
-      );
-      return res.status(400).json({
-        user_exist: "User already exist verify your account otp is send",
-      });
-    }
+    //   await sendEmail(
+    //     decoded.email,
+    //     "OTP Verification",
+    //     `your otp is ${otp}`,
+    //     html,
+    //   );
+    //   return res.status(400).json({
+    //     user_exist: "User already exist verify your account otp is send",
+    //   });
+    // }
 
-    if (find_user && !token_cookie) {
-      return res.status(400).json({ msg_login: "please login" });
-    }
+    // if (find_user && !token_cookie) {
+    //   return res.status(400).json({ msg_login: "please login" });
+    // }
 
     let hashed_password = await bcrypt.hash(password, 12);
 
