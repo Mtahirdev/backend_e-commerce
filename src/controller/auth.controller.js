@@ -79,12 +79,12 @@ export let SignupFun = async (req, res) => {
     });
     await otpstore.save();
 
-    await sendEmail(
-      newuser.email,
-      "OTP Verification",
-      `your otp is ${otp}`,
-      html,
-    );
+    // await sendEmail(
+    //   newuser.email,
+    //   "OTP Verification",
+    //   `your otp is ${otp}`,
+    //   html,
+    // );
 
     const refresh_token = jwt.sign(
       { userId: newuser._id, verified: newuser.verified, email: newuser.email },
