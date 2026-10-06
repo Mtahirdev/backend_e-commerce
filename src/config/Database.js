@@ -4,7 +4,7 @@ import config from "./config.js";
 const ConnectDB = async () => {
   try {
     await mongoose.connect(
-      "mongodb+srv://tahirpansota796_db_user:MqLxqGfopOdxDLua@cluster0.dctdrhe.mongodb.net",
+      "mongodb+srv://mawaissultan07_db_user:y2ywDjXWnGf12eA3@cluster0.qcv3mex.mongodb.net",
       {
         serverSelectionTimeoutMS: 10000,
       },
