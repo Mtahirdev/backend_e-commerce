@@ -3,12 +3,9 @@ import config from "./config.js";
 
 const ConnectDB = async () => {
   try {
-    await mongoose.connect(
-      "mongodb+srv://mawaissultan07_db_user:y2ywDjXWnGf12eA3@cluster0.qcv3mex.mongodb.net",
-      {
-        serverSelectionTimeoutMS: 10000,
-      },
-    );
+    await mongoose.connect(config.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+    });
 
     console.log("MongoDB connected successfully");
   } catch (error) {
