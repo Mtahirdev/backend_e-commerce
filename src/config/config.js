@@ -6,10 +6,6 @@ if (!process.env.MONGODB_URI) {
   throw new Error("Connection string is not defind");
 }
 
-if (!process.env.PORT) {
-  throw new Error("port is not defined");
-}
-
 if (!process.env.Google_Client_Id) {
   throw new Error(
     "Google_Client_Id is not defined in the environment variables.",
@@ -34,7 +30,6 @@ if (!process.env.JWT_SECRET) {
 
 let config = {
   MONGODB_URI: process.env.MONGODB_URI,
-  PORT: process.env.PORT,
   googleClientId: process.env.Google_Client_Id,
   googleClientSecret: process.env.Google_Client_Secret,
   googleRefreshToken: process.env.Google_Refresh_Token,
