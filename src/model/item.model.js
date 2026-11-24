@@ -69,6 +69,7 @@ let item_schema = new mongoose.Schema({
   },
 
   arrofimg: [],
+  arrofcomment: [],
 });
 
 let ItemModel = mongoose.model("ItemModel", item_schema);

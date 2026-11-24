@@ -4,6 +4,7 @@ import {
   AddItem,
   DeleteProductAdmin,
   FetchAdminProduct,
+  FetchSellerOrder,
   UpdateItem,
 } from "../controller/admin.controller.js";
 import AddProductValidator from "../validator/addProduct.validator.js";
@@ -19,10 +20,9 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
 AdminRouter.post(
   "/admin/additem",
-  upload.single("itemimg"),
+  upload.array("itemimg", 4), // was upload.single
   AddProductValidator,
   AddItem,
 );
@@ -34,5 +34,6 @@ AdminRouter.post(
   AddProductValidator,
   UpdateItem,
 );
+AdminRouter.get("/admin/fetchorder", FetchSellerOrder);
 
 export default AdminRouter;

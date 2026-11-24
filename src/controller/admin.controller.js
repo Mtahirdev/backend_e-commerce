@@ -50,25 +50,31 @@ export const AddItem = async (req, res) => {
       itemunit,
     } = req.body;
 
-    console.log(req.body);
+    // all uploaded images -> full urls
+    const images = (req.files || []).map(
+      (f) => `http://localhost:3000/uploads/${f.filename}`,
+    );
 
-    let itemimg = req.file?.filename;
-
-    itemimg = `http://localhost:3000/uploads/${itemimg}`;
-    console.log(itemimg);
+    if (images.length === 0) {
+      return res.status(400).json({
+        msg_validation: "validation error",
+        validation: { msg: "Please add at least one image" },
+      });
+    }
 
     const item = new ItemModel({
       brand: itembrand,
       productName: itemname,
-      category: itemcategory,
-      color: itemcolor,
+      category: itemcategory, // "Men,Fashion" (comma separated string)
+      color: itemcolor, // "Black,Red"
       description: itemdescription,
       discount: itemdiscount,
       price: itemprice,
       size: itemsize,
       stock: itemstock,
       unit: itemunit,
-      mainimg: itemimg,
+      mainimg: images[0], // cover image
+      arrofimg: images, // all images, including the cover
       rating: 0,
       reviews: 0,
     });
@@ -81,6 +87,12 @@ export const AddItem = async (req, res) => {
     return res.json({ msg_itemadd: "item add successfully", item });
   } catch (error) {
     console.log(error);
+    if (error.name === "MulterError") {
+      return res.status(400).json({
+        msg_validation: "validation error",
+        validation: { msg: "You can upload up to 4 images" },
+      });
+    }
 
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({ msg: "Invalid token" });
@@ -265,6 +277,46 @@ export const UpdateItem = async (req, res) => {
       msg_itemadd: "item update successfully",
       item,
     });
+  } catch (error) {
+    console.log(error);
+
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ msg: "Invalid token" });
+    }
+
+    if (error.name === "TokenExpiredError") {
+      return res.status(403).json({ msg: "Token expired" });
+    }
+
+    return res.status(500).json({ msgerr: "Internal server error" });
+  }
+};
+
+export let FetchSellerOrder = async (req, res) => {
+  try {
+    const token = req.cookies.refresh_token;
+
+    if (!token) {
+      return res.status(400).json({ msg_login: "please Login" });
+    }
+
+    const access_token = req.headers.authorization?.split(" ")[1];
+
+    if (!access_token) {
+      return res.status(400).json({ msg_login: "please Login" });
+    }
+
+    const decoded = jwt.verify(access_token, config.jwtsecret);
+
+    const user = await UserModel.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(400).json({ msg_signup: "please signup" });
+    }
+
+    let order = user.order;
+
+    return res.status(200).json({ order });
   } catch (error) {
     console.log(error);
 

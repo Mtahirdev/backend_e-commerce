@@ -4,7 +4,7 @@ let LoginValidator = [
   body("email").trim().isEmail().withMessage("Enter a valid email"),
   body("password")
     .trim()
-    .isLength({ max: 6 })
+    .isLength({ max: 8 })
     .withMessage("Password must be four character"),
 ];
 

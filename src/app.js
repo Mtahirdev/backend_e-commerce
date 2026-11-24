@@ -4,6 +4,9 @@ import AuthRouter from "./router/auth.routes.js";
 import cookieParser from "cookie-parser";
 import AdminRouter from "./router/admin.routes.js";
 import BuyerRouter from "./router/buyer.routes.js";
+import ConnectDB from "./config/Database.js";
+import { createServer } from "http";
+import { socketInit } from "./socket.js";
 
 let app = express();
 
@@ -18,8 +21,14 @@ app.use(cookieParser());
 
 app.use("/uploads", express.static("uploads"));
 
+await ConnectDB();
+
+let httpServer = createServer(app);
+
+socketInit(httpServer);
+
 app.use(AuthRouter);
 app.use(AdminRouter);
 app.use(BuyerRouter);
 
-export default app;
+export default httpServer;

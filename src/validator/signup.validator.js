@@ -10,8 +10,8 @@ let SignupValidation = [
   body("email").trim().isEmail().withMessage("Please enter valid email"),
   body("password")
     .trim()
-    .isLength({ max: 6 })
-    .withMessage("Password must be four character"),
+    .isLength({ min: 8 })
+    .withMessage("Password must be eight character"),
   // body("confirmPassword")
   //   .trim()
   //   .notEmpty()

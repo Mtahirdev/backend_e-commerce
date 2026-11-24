@@ -35,6 +35,7 @@ let config = {
   googleRefreshToken: process.env.Google_Refresh_Token,
   googleUser: process.env.Google_User,
   jwtsecret: process.env.JWT_SECRET,
+  smtpPass: process.env.SMTP_PASS,
 };
 
 export default config;

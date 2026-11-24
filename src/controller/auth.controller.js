@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { sendEmail } from "../services/email.services.js";
 import Session from "../model/session.model.js";
 import UserModelAdmin from "../model/useradmin.model.js";
+import OrderModel from "../model/order.model.js";
 
 export let SignupFun = async (req, res) => {
   try {
@@ -19,44 +20,13 @@ export let SignupFun = async (req, res) => {
     if (!error.isEmpty()) {
       return res.status(400).json({ msg_validation: error.array()[0] });
     }
-    // let find_user = await UserModel.findOne({ email: email });
+    let find_user = await UserModel.findOne({ email: email });
 
-    // if (find_user && token_cookie && find_user.verified == false) {
-    //   let decoded = jwt.verify(token_cookie, config.jwtsecret);
-
-    //   // decoded = await UserModel.findById({ _id: decoded.userId });
-
-    //   let otp = generateotp();
-    //   let html = emailTemplate();
-
-    //   console.log(otp);
-
-    //   const hashedOtp = await crypto
-    //     .createHash("sha256")
-    //     .update(otp)
-    //     .digest("hex");
-
-    //   const otpstore = new OTP({
-    //     userId: decoded.userId,
-    //     email: decoded.email,
-    //     otp: hashedOtp,
-    //   });
-    //   await otpstore.save();
-
-    //   await sendEmail(
-    //     decoded.email,
-    //     "OTP Verification",
-    //     `your otp is ${otp}`,
-    //     html,
-    //   );
-    //   return res.status(400).json({
-    //     user_exist: "User already exist verify your account otp is send",
-    //   });
-    // }
-
-    // if (find_user && !token_cookie) {
-    //   return res.status(400).json({ msg_login: "please login" });
-    // }
+    if (find_user) {
+      return res
+        .status(400)
+        .json({ msg_validation: [{ msg: "User is already exist" }] });
+    }
 
     let hashed_password = await bcrypt.hash(password, 12);
 
@@ -77,14 +47,15 @@ export let SignupFun = async (req, res) => {
       email: newuser.email,
       otp: hashedOtp,
     });
-    await otpstore.save();
 
-    // await sendEmail(
-    //   newuser.email,
-    //   "OTP Verification",
-    //   `your otp is ${otp}`,
-    //   html,
-    // );
+    let data = await sendEmail(
+      newuser.email,
+      "OTP Verification",
+      `your otp is ${otp}`,
+      html,
+    );
+    console.log("read send email data", data);
+    await otpstore.save();
 
     const refresh_token = jwt.sign(
       { userId: newuser._id, verified: newuser.verified, email: newuser.email },
@@ -125,8 +96,6 @@ export let OtpFun = async (req, res) => {
     }
 
     const decoded = jwt.verify(token_cookie, config.jwtsecret);
-
-    console.log("token decoded", decoded);
 
     const user = await UserModel.findOne({ _id: decoded.userId });
 
@@ -208,10 +177,11 @@ export let OtpFun = async (req, res) => {
       data: {
         accesstoken,
         type: user.type,
-        verified: user.verified,
+        verified: true,
         name: user.username,
         email: user.email,
         userarray: user.userarray,
+        user: user,
       },
     });
   } catch (error) {
@@ -248,9 +218,14 @@ export const LoginFun = async (req, res) => {
 
   if (user.verified == false) {
     let otp = generateotp();
-    let html = emailTemplate();
+    let html = emailTemplate(otp);
 
     console.log(otp);
+
+    let otp_find = await OTP.findOne({ userId: user._id });
+    if (otp_find) {
+      await OTP.deleteOne({ _id: otp_find._id });
+    }
 
     const hashedOtp = await crypto
       .createHash("sha256")
@@ -264,8 +239,30 @@ export const LoginFun = async (req, res) => {
     });
     await otpstore.save();
 
-    await sendEmail(user.email, "OTP Verification", `your otp is ${otp}`, html);
-    return res.json({ msg_otp: "please verify your email " });
+    let data = await sendEmail(
+      user.email,
+      "OTP Verification",
+      `your otp is ${otp}`,
+      html,
+    );
+
+    console.log(data);
+
+    const refresh_token = jwt.sign(
+      { userId: user._id, verified: user.verified, email: user.email },
+      config.jwtsecret,
+      { expiresIn: "7d" },
+    );
+
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return res.json({
+      msg_otp: "please verify your email otp is send on you email ",
+    });
   }
 
   const refresh_token = jwt.sign(
@@ -293,6 +290,13 @@ export const LoginFun = async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
+  let orderarr;
+  if (user.type == "seller") {
+    orderarr = user.order;
+  } else {
+    orderarr = await OrderModel.find({ _id: { $in: user.order } });
+  }
+
   return res.status(200).json({
     msg_success: "Login successfully",
     data: {
@@ -302,6 +306,8 @@ export const LoginFun = async (req, res) => {
       name: user.username,
       email: user.email,
       userarray: user.userarray,
+      user: user,
+      order: orderarr,
     },
   });
 };
@@ -338,8 +344,8 @@ export const RequesOtp = async (req, res) => {
       email: user.email,
       otp: hashedOtp,
     });
-    await otpstore.save();
     await sendEmail(user.email, "OTP Verification", `your otp is ${otp}`, html);
+    await otpstore.save();
 
     return res.json({ msg_success: "otp is send to your email" });
   } catch (error) {
@@ -467,7 +473,7 @@ export const Logout = async (req, res) => {
 
     const decoded = jwt.verify(access_token, config.jwtsecret);
 
-    const user = await User.findById({ _id: decoded.userId });
+    const user = await UserModel.findById({ _id: decoded.userId });
 
     if (!user) {
       return res.status(400).json({ msg_signup: "please signup" });
@@ -511,6 +517,13 @@ export let Getme = async (req, res) => {
       return res.status(400).json({ msg_signup: "please signup" });
     }
 
+    if (user.verified == false) {
+      return res.status(400).json({
+        msg_not_verified: "user is not verified",
+        user,
+      });
+    }
+
     const accesstoken = jwt.sign({ userId: user._id }, config.jwtsecret, {
       expiresIn: "10m",
     });
@@ -542,10 +555,19 @@ export let Getme = async (req, res) => {
       secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    let orderarr;
+    if (user.type == "seller") {
+      orderarr = user.order;
+    } else {
+      orderarr = await OrderModel.find({ _id: { $in: user.order } });
+    }
 
-    return res
-      .status(200)
-      .json({ msg_success: "user verified", accesstoken, user });
+    return res.status(200).json({
+      msg_success: "user verified",
+      accesstoken,
+      user,
+      order: orderarr,
+    });
   } catch (error) {
     console.log(error);
 

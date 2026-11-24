@@ -14,3 +14,15 @@ export let emailTemplate = (otp) => {
     </div>
   `;
 };
+
+export let generateOrderNumber = () => {
+  let date = new Date();
+
+  let year = date.getFullYear();
+  let month = String(date.getMonth() + 1).padStart(2, "0");
+  let day = String(date.getDate()).padStart(2, "0");
+
+  let random = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  return `SHP-${year}${month}${day}-${random}`;
+};
