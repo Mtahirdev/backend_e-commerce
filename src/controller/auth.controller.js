@@ -81,11 +81,11 @@ export let SignupFun = async (req, res) => {
 
 export let OtpFun = async (req, res) => {
   try {
-    const token_cookie = req.cookies.refresh_token;
+    // const token_cookie = req.cookies.refresh_token;
 
-    if (!token_cookie) {
-      return res.status(400).json({ msg_login: "please Login" });
-    }
+    // if (!token_cookie) {
+    //   return res.status(400).json({ msg_login: "please Login" });
+    // }
 
     const { otp } = req.body;
 
