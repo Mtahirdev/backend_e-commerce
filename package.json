@@ -23,7 +23,6 @@
     "multer": "^2.4.0",
     "nodemailer": "^10.0.10",
     "nodemon": "^3.1.14",
-    "socket.io": "^4.8.4",
-    "vercel": "^62.4.0"
+    "socket.io": "^4.8.4"
   }
 }
