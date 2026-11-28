@@ -8,7 +8,7 @@ let userSocketMap = {};
 export let socketInit = async (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: "https://frontendofe-commerce.vercel.app",
       methods: ["GET", "POST"],
       credentials: true,
     },
