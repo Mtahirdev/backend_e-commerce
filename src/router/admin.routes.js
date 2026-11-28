@@ -10,17 +10,14 @@ import {
 import AddProductValidator from "../validator/addProduct.validator.js";
 
 let AdminRouter = express.Router();
-
-const storage = multer({
+const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB per file (see note below)
+  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB per file
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Only image files are allowed"));
   },
 });
-
-const upload = multer({ storage });
 AdminRouter.post(
   "/admin/additem",
   upload.array("itemimg", 4), // was upload.single
