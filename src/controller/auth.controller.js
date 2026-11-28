@@ -151,7 +151,7 @@ export let OtpFun = async (req, res) => {
       expiresIn: "10m",
     });
 
-    res.cookie("refresh_token", refresh_token, {
+    res.cookie("refresh_token", refreshtoken, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
@@ -445,7 +445,7 @@ export const RefreshToken = async (req, res) => {
       .digest("hex");
     await session.save();
 
-    res.cookie("refresh_token", refresh_token, {
+    res.cookie("refresh_token", newRefreshToken, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
@@ -550,7 +550,7 @@ export let Getme = async (req, res) => {
       .digest("hex");
     await session.save();
 
-    res.cookie("refresh_token", refresh_token, {
+    res.cookie("refresh_token", newRefreshToken, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
