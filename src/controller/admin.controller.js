@@ -1,21 +1,25 @@
-import UserModelAdmin from "../model/useradmin.model.js";
 import ItemModel from "../model/item.model.js";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
-import os from "os";
 import { validationResult } from "express-validator";
 import UserModel from "../model/user.model.js";
+import uploadToCloudinary from "../config/cloudinarystore.js";
 
 export const AddItem = async (req, res) => {
   try {
+    // 1. Auth checks
     const token = req.cookies.refresh_token;
-
     if (!token) {
       return res.status(400).json({ msg_login: "please Login" });
     }
 
-    const err = validationResult(req);
+    const access_token = req.headers.authorization?.split(" ")[1];
+    if (!access_token) {
+      return res.status(400).json({ msg_login: "please Login" });
+    }
 
+    // 2. Validation
+    const err = validationResult(req);
     if (!err.isEmpty()) {
       return res.status(400).json({
         msg_validation: "validation error",
@@ -23,21 +27,16 @@ export const AddItem = async (req, res) => {
       });
     }
 
-    const access_token = req.headers.authorization?.split(" ")[1];
-
-    if (!access_token) {
-      return res.status(400).json({ msg_login: "please Login" });
-    }
-
+    // 3. Verify user
     const decoded = jwt.verify(access_token, config.jwtsecret);
-
-    const user = await UserModel.findById({ _id: decoded.userId });
+    const user = await UserModel.findById(decoded.userId);
 
     if (!user) {
       return res.status(400).json({ msg_signup: "please signup" });
     }
 
-    let {
+    // 4. Body fields
+    const {
       itemname,
       itembrand,
       itemcategory,
@@ -50,50 +49,53 @@ export const AddItem = async (req, res) => {
       itemunit,
     } = req.body;
 
-    // all uploaded images -> full urls
-    const images = (req.files || []).map(
-      (f) => `http://localhost:3000/uploads/${f.filename}`,
-    );
-
-    if (images.length === 0) {
+    // 5. Images (only upload after everything else passed)
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         msg_validation: "validation error",
         validation: { msg: "Please add at least one image" },
       });
     }
 
+    const results = await Promise.all(
+      req.files.map((f) => uploadToCloudinary(f, "image", "products")),
+    );
+
+    const images = results.map((r) => r.secure_url);
+
+    // 6. Save item
     const item = new ItemModel({
       brand: itembrand,
       productName: itemname,
-      category: itemcategory, // "Men,Fashion" (comma separated string)
-      color: itemcolor, // "Black,Red"
+      category: itemcategory,
+      color: itemcolor,
       description: itemdescription,
       discount: itemdiscount,
       price: itemprice,
       size: itemsize,
       stock: itemstock,
       unit: itemunit,
-      mainimg: images[0], // cover image
-      arrofimg: images, // all images, including the cover
+      mainimg: images[0],
+      arrofimg: images,
       rating: 0,
       reviews: 0,
     });
+
     await item.save();
 
     user.userarray.push(item._id);
-
     await user.save();
 
     return res.json({ msg_itemadd: "item add successfully", item });
   } catch (error) {
     console.log(error);
+
     if (error.name === "MulterError") {
       return res.status(400).json({
         msg_validation: "validation error",
         validation: { msg: "You can upload up to 4 images" },
       });
     }
-
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({ msg: "Invalid token" });
     }

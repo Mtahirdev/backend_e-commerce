@@ -11,11 +11,12 @@ import AddProductValidator from "../validator/addProduct.validator.js";
 
 let AdminRouter = express.Router();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/\\/g, "_").replace(/\s/g, "_");
-    cb(null, Date.now() + "-" + safeName);
+const storage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB per file (see note below)
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
   },
 });
 
